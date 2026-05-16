@@ -85,7 +85,7 @@ export function VaultScreen({
 
   return (
     <ScrollView contentContainerStyle={styles.screen}>
-      <Header title="Vault" subtitle={`${vault.directiveState} advance directive vault`} />
+      <Header title="Vault" subtitle={`${vault.directiveState || 'State-specific'} advance directive vault`} />
       <View style={styles.summaryCard}>
         <View style={styles.summaryHeader}>
           <View style={styles.flex}>

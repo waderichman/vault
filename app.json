@@ -5,12 +5,16 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "scheme": "advancevault",
+    "scheme": [
+      "advancevault",
+      "com.googleusercontent.apps.15851012847-9o6u4fd44dssb9fusp2g7jrrf61l2lr1"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.advancevault.app",
       "infoPlist": {
-        "NSFaceIDUsageDescription": "AdvanceVault uses Face ID to protect access to your advance health care directives."
+        "NSFaceIDUsageDescription": "AdvanceVault uses Face ID to protect access to your advance health care directives.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -21,6 +25,14 @@
     },
     "web": {
       "bundler": "metro"
+    },
+    "plugins": [
+      "expo-web-browser"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7d22c5a2-d359-42b4-803f-7f667f91de6c"
+      }
     }
   }
 }

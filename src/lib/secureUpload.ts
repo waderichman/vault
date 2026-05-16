@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { firestore, isFirebaseConfigured } from './firebase';
+import { firebaseAuth, firestore, isFirebaseConfigured } from './firebase';
 import { DirectiveDocument, VaultData } from '../types/vault';
 
 export async function uploadEncryptedDocument({
@@ -20,19 +20,27 @@ export async function uploadEncryptedDocument({
     throw new Error('This document has not been encrypted locally yet.');
   }
 
-  const vaultId = makeVaultId(vault.memberName);
+  const user = firebaseAuth.currentUser;
+
+  if (!user) {
+    throw new Error('Sign in before uploading encrypted documents.');
+  }
+
+  const vaultId = user.uid;
   const storagePath = `vaults/${vaultId}/documents/${document.id}.enc`;
 
   await uploadEncryptedFile(document.encryptedLocalUri, storagePath);
   onStorageUploaded?.();
 
   await withTimeout(
-    setDoc(doc(firestore, 'directiveDocuments', document.id), {
+    setDoc(doc(firestore, 'users', user.uid, 'directiveDocuments', document.id), {
       id: document.id,
       vaultId,
+      ownerUid: user.uid,
       memberName: vault.memberName,
       type: document.type,
       state: document.state,
+      stateCode: vault.directiveStateCode ?? null,
       signedDate: document.signedDate || null,
       uploaded_by: document.uploadedBy,
       storagePath,
@@ -58,9 +66,14 @@ function makeVaultId(memberName: string) {
 async function uploadEncryptedFile(fileUri: string, storagePath: string) {
   const storageBucket = process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET;
   const projectId = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
+  const token = await firebaseAuth.currentUser?.getIdToken();
 
   if (!storageBucket) {
     throw new Error('Missing EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET in .env.');
+  }
+
+  if (!token) {
+    throw new Error('Sign in before uploading encrypted documents.');
   }
 
   const bucketsToTry = [storageBucket];
@@ -78,6 +91,7 @@ async function uploadEncryptedFile(fileUri: string, storagePath: string) {
       httpMethod: 'POST',
       uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
       headers: {
+        Authorization: `Firebase ${token}`,
         'Content-Type': 'application/octet-stream',
       },
     });

@@ -3,6 +3,8 @@ import { FeatureRow } from '../components/FeatureRow';
 import { Header } from '../components/Header';
 import { InfoLine } from '../components/InfoLine';
 import { SectionTitle } from '../components/SectionTitle';
+import { StateGuidancePanel } from '../components/StateGuidancePanel';
+import { StatePicker } from '../components/StatePicker';
 import { styles } from '../components/styles';
 import { VaultData } from '../types/vault';
 
@@ -10,10 +12,14 @@ export function SettingsScreen({
   vault,
   updateVault,
   resetVault,
+  userEmail,
+  onSignOut,
 }: {
   vault: VaultData;
   updateVault: (patch: Partial<VaultData>) => void;
   resetVault: () => void;
+  userEmail: string | null;
+  onSignOut: () => void;
 }) {
   return (
     <ScrollView contentContainerStyle={styles.screen}>
@@ -22,8 +28,12 @@ export function SettingsScreen({
         <Text style={styles.inputLabel}>Vault owner</Text>
         <TextInput style={styles.input} value={vault.memberName} onChangeText={(memberName) => updateVault({ memberName })} />
         <Text style={styles.inputLabel}>Directive state</Text>
-        <TextInput style={styles.input} value={vault.directiveState} onChangeText={(directiveState) => updateVault({ directiveState })} />
+        <StatePicker
+          value={vault.directiveStateCode}
+          onChange={(state) => updateVault({ directiveState: state.name, directiveStateCode: state.code })}
+        />
       </View>
+      <StateGuidancePanel stateCode={vault.directiveStateCode} />
       <View style={styles.panel}>
         <SectionTitle title="Attorney Office" />
         <Text style={styles.inputLabel}>Firm</Text>
@@ -43,6 +53,7 @@ export function SettingsScreen({
       </View>
       <View style={styles.panel}>
         <SectionTitle title="Secure Upload Pipeline" />
+        <InfoLine label="Signed in as" value={userEmail ?? 'Unknown Firebase user'} />
         <InfoLine label="Selected PDFs" value={`${vault.documents.filter((document) => document.localUri).length}`} />
         <InfoLine label="Encrypted locally" value={`${vault.documents.filter((document) => document.encryptedLocalUri).length}`} />
         <InfoLine label="Queued for backend" value={`${vault.documents.filter((document) => document.uploadStatus === 'Encrypted locally' || document.uploadStatus === 'Encrypted upload queued').length}`} />
@@ -54,8 +65,25 @@ export function SettingsScreen({
         <InfoLine label="Family plan" value="$99/year" />
         <InfoLine label="Attorney plan" value="$99/month" />
       </View>
+      <View style={styles.panel}>
+        <SectionTitle title="About" />
+        <InfoLine label="App" value="AdvanceVault MVP" />
+        <Text style={styles.rowSub}>AdvanceVault stores local vault records, encrypts selected PDFs before upload, and keeps Firebase documents scoped to the signed-in user.</Text>
+      </View>
+      <View style={styles.panel}>
+        <SectionTitle title="Contact" />
+        <InfoLine label="Support" value="support@example.com" />
+        <Text style={styles.rowSub}>Use this contact for product support and issue reports. Replace this with the production support inbox before release.</Text>
+      </View>
+      <View style={styles.panel}>
+        <SectionTitle title="Disclaimer" />
+        <Text style={styles.rowSub}>AdvanceVault is not a law firm, medical provider, or emergency service. Information in the app is educational and does not replace advice from an attorney, clinician, or qualified professional. Users are responsible for executing documents according to applicable state requirements.</Text>
+      </View>
       <Pressable style={styles.dangerButton} onPress={resetVault}>
         <Text style={styles.dangerButtonText}>Reset Demo Data</Text>
+      </Pressable>
+      <Pressable style={styles.secondaryButton} onPress={onSignOut}>
+        <Text style={styles.secondaryButtonText}>Sign Out</Text>
       </Pressable>
     </ScrollView>
   );

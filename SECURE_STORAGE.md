@@ -6,11 +6,13 @@ AdvanceVault should never upload raw PDFs in production.
 
 The Expo app now:
 
+- Requires Firebase email/password sign-in before local vault unlock.
 - Picks a signed PDF with `expo-document-picker`.
 - Reads the PDF inside the app.
 - Encrypts the PDF payload locally.
 - Writes an encrypted `.enc` file into Expo app document storage.
-- Stores document metadata, encrypted file path, encrypted size, key reference, and fingerprint locally.
+- Uploads the encrypted `.enc` blob to Firebase Storage under the signed-in user.
+- Stores document metadata, encrypted file path, encrypted size, key reference, and fingerprint in Firestore under the signed-in user.
 
 This proves the app flow, but it is not the final production key model.
 
@@ -28,7 +30,7 @@ This proves the app flow, but it is not the final production key model.
 The current mobile upload adapter writes document metadata to this Firestore collection:
 
 ```text
-directiveDocuments/{documentId}
+users/{uid}/directiveDocuments/{documentId}
 ```
 
 Each record includes:
@@ -36,13 +38,14 @@ Each record includes:
 ```json
 {
   "id": "doc-example",
-  "vaultId": "demo-member-name",
+  "vaultId": "firebase-user-uid",
+  "ownerUid": "firebase-user-uid",
   "memberName": "Demo Member",
   "type": "Health Care Surrogate",
   "state": "Florida",
   "signedDate": "2026-05-10",
   "uploaded_by": "Attorney Office",
-  "storagePath": "vaults/demo-member-name/documents/doc-example.enc",
+  "storagePath": "vaults/firebase-user-uid/documents/doc-example.enc",
   "encryptedSize": 12345,
   "encryptionKeyRef": "local-key-example",
   "fingerprint": "abcdef1234567890",
@@ -61,30 +64,36 @@ vaults/{vaultId}/documents/{documentId}.enc
 
 No public bucket access. Use Firebase Auth-backed rules or server-issued upload/download capabilities before production release.
 
-Example development-only rules while testing with a temporary Firebase project:
+Example authenticated-user rules for the current MVP:
 
 ```text
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    match /vaults/{vaultId}/documents/{documentId} {
-      allow read, write: if true;
+    match /vaults/{uid}/documents/{documentId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
     }
   }
 }
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /directiveDocuments/{documentId} {
-      allow read, write: if true;
+    match /users/{uid}/directiveDocuments/{documentId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
     }
   }
 }
 ```
 
-Do not ship those rules. Production rules should require an authenticated user, bind vault records to that user, and authorize emergency access through a separate approval flow.
+Production rules should also validate document fields, enforce immutable owner IDs, and authorize emergency access through a separate approval flow.
 
 ## Emergency Access Rule
 
 Emergency access should be approved inside the app by trusted contacts or attorney-authorized users. Do not expose document URLs or decryption keys publicly.
+
+## State-Specific Legal Content
+
+Advance directive requirements vary by state. The app should store a normalized state code with each vault and each uploaded document metadata record. State-specific rules such as witness count, notary requirements, statutory form language, reciprocity, POLST/MOLST handling, and revocation rules should come from official state materials or attorney-reviewed content before production release.
+
+The current app intentionally treats state profiles as source-linked guidance, not verified legal advice.

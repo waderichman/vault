@@ -65,6 +65,7 @@ export type VaultData = {
   onboarded: boolean;
   memberName: string;
   directiveState: string;
+  directiveStateCode?: string;
   attorneyName: string;
   attorneyFirm: string;
   attorneyPhone: string;

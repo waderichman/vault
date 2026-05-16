@@ -6,3 +6,4 @@ expo-server*.log
 npm-debug.log*
 .env
 .env.local
+SECURE_STORAGE.md
