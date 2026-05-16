@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "AdvanceVault",
+    "slug": "advance-vault",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "advancevault",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.advancevault.app",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "AdvanceVault uses Face ID to protect access to your advance health care directives."
+      }
+    },
+    "android": {
+      "package": "com.advancevault.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0f766e"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

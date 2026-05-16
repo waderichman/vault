@@ -1,0 +1,104 @@
+import * as FileSystem from 'expo-file-system/legacy';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { firestore, isFirebaseConfigured } from './firebase';
+import { DirectiveDocument, VaultData } from '../types/vault';
+
+export async function uploadEncryptedDocument({
+  vault,
+  document,
+  onStorageUploaded,
+}: {
+  vault: VaultData;
+  document: DirectiveDocument;
+  onStorageUploaded?: () => void;
+}) {
+  if (!isFirebaseConfigured) {
+    throw new Error('Add your EXPO_PUBLIC_FIREBASE_* values to .env before uploading.');
+  }
+
+  if (!document.encryptedLocalUri) {
+    throw new Error('This document has not been encrypted locally yet.');
+  }
+
+  const vaultId = makeVaultId(vault.memberName);
+  const storagePath = `vaults/${vaultId}/documents/${document.id}.enc`;
+
+  await uploadEncryptedFile(document.encryptedLocalUri, storagePath);
+  onStorageUploaded?.();
+
+  await withTimeout(
+    setDoc(doc(firestore, 'directiveDocuments', document.id), {
+      id: document.id,
+      vaultId,
+      memberName: vault.memberName,
+      type: document.type,
+      state: document.state,
+      signedDate: document.signedDate || null,
+      uploaded_by: document.uploadedBy,
+      storagePath,
+      encryptedSize: document.encryptedSize ?? null,
+      encryptionKeyRef: document.encryptionKeyId ?? 'local-demo-key',
+      fingerprint: document.encryptionFingerprint ?? 'missing-fingerprint',
+      isActive: document.isActive,
+      statuses: document.statuses,
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp(),
+    }),
+    15000,
+    'Encrypted file uploaded, but Firestore metadata did not finish saving. Check Firestore rules, then retry.',
+  );
+
+  return storagePath;
+}
+
+function makeVaultId(memberName: string) {
+  return memberName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'local-demo-vault';
+}
+
+async function uploadEncryptedFile(fileUri: string, storagePath: string) {
+  const storageBucket = process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  const projectId = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
+
+  if (!storageBucket) {
+    throw new Error('Missing EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET in .env.');
+  }
+
+  const bucketsToTry = [storageBucket];
+  const legacyBucket = projectId ? `${projectId}.appspot.com` : null;
+
+  if (legacyBucket && !bucketsToTry.includes(legacyBucket)) {
+    bucketsToTry.push(legacyBucket);
+  }
+
+  const errors: string[] = [];
+
+  for (const bucket of bucketsToTry) {
+    const uploadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?uploadType=media&name=${encodeURIComponent(storagePath)}`;
+    const response = await FileSystem.uploadAsync(uploadUrl, fileUri, {
+      httpMethod: 'POST',
+      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+      headers: {
+        'Content-Type': 'application/octet-stream',
+      },
+    });
+
+    if (response.status >= 200 && response.status < 300) {
+      return;
+    }
+
+    errors.push(`${bucket}: ${response.status} ${response.body}`);
+  }
+
+  throw new Error(`Firebase Storage upload failed. Tried ${bucketsToTry.join(', ')}. ${errors.join(' | ')}`);
+}
+
+function withTimeout<T>(promise: Promise<T>, milliseconds: number, message: string) {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error(message)), milliseconds);
+
+    promise
+      .then(resolve)
+      .catch(reject)
+      .finally(() => clearTimeout(timeout));
+  });
+}
