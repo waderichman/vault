@@ -35,7 +35,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: (patch: Partial<V
     <SafeAreaView style={styles.shell}>
       <ScrollView contentContainerStyle={styles.onboarding}>
         <Text style={styles.heroTitle}>When you cannot speak, this speaks for you.</Text>
-        <Text style={styles.heroCopy}>Store verified health care proxies, HIPAA authorizations, and living wills so the right people can act fast.</Text>
+        <Text style={styles.heroCopy}>Store health care proxies, HIPAA authorizations, and living wills so the right people can act fast.</Text>
         <View style={styles.panel}>
           <Text style={styles.inputLabel}>Vault owner</Text>
           <TextInput style={styles.input} value={memberName} onChangeText={setMemberName} placeholder="Full legal name" />
@@ -50,7 +50,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: (patch: Partial<V
         </View>
         <StateGuidancePanel stateCode={directiveStateCode} />
         <FeatureRow icon="document-lock-outline" title="Core directives" detail="Proxy, HIPAA authorization, and living will in one focused vault." />
-        <FeatureRow icon="checkmark-done-circle-outline" title="Document authenticity" detail="Attorney-uploaded, signed, witnessed, reviewed, and active status." />
+        <FeatureRow icon="checkmark-done-circle-outline" title="Document status" detail="Track signed, witnessed, notarized, attorney-reviewed, and active status when known." />
         <FeatureRow icon="alert-circle-outline" title="Emergency controls" detail="Trusted contacts can approve or deny access requests inside the app." />
         <Pressable style={styles.primaryButton} onPress={createVault}>
           <Ionicons name="add-circle-outline" size={20} color="#ffffff" />

@@ -4,11 +4,13 @@ import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { Header } from '../components/Header';
 import { Metric } from '../components/Metric';
 import { SectionTitle } from '../components/SectionTitle';
+import { StateChecklistPanel } from '../components/StateChecklistPanel';
 import { styles } from '../components/styles';
 import { documentMeta } from '../data/documentMeta';
 import { DocumentDetail } from '../features/documents/DocumentDetail';
 import { DocumentForm } from '../features/documents/DocumentForm';
 import { nextStatusesForActive } from '../lib/documentStatus';
+import { summarizeStateChecklist } from '../lib/stateChecklist';
 import { uploadEncryptedDocument } from '../lib/secureUpload';
 import { DirectiveDocument, VaultData } from '../types/vault';
 
@@ -26,6 +28,7 @@ export function VaultScreen({
   const [selectedDocument, setSelectedDocument] = useState<DirectiveDocument | null>(null);
   const [showDocumentForm, setShowDocumentForm] = useState(false);
   const activeDocuments = vault.documents.filter((document) => document.isActive);
+  const stateSummary = summarizeStateChecklist(vault);
 
   const updateDocumentStatus = (documentId: string, uploadStatus: DirectiveDocument['uploadStatus']) => {
     setVault((current) => ({
@@ -85,21 +88,23 @@ export function VaultScreen({
 
   return (
     <ScrollView contentContainerStyle={styles.screen}>
-      <Header title="Vault" subtitle={`${vault.directiveState || 'State-specific'} advance directive vault`} />
+      <Header title="Vault" subtitle={`${vault.directiveState || 'Selected-state'} directive document vault`} />
       <View style={styles.summaryCard}>
         <View style={styles.summaryHeader}>
           <View style={styles.flex}>
             <Text style={styles.cardTitle}>{vault.memberName}</Text>
-            <Text style={styles.muted}>Attorney-verified directive set</Text>
+            <Text style={styles.muted}>Encrypted advance care document vault</Text>
           </View>
           <Ionicons name="checkmark-circle" size={34} color="#0f766e" />
         </View>
         <View style={styles.metrics}>
           <Metric value={`${activeDocuments.length}`} label="Active docs" />
-          <Metric value={`${vault.contacts.length}`} label="Contacts" />
-          <Metric value="2027" label="Review" />
+          <Metric value={`${stateSummary.coreMissing}`} label="Core missing" />
+          <Metric value={`${stateSummary.reviewNeeded}`} label="Review" />
         </View>
       </View>
+
+      <StateChecklistPanel vault={vault} />
 
       <View style={styles.sectionHeader}>
         <SectionTitle title="Advance Health Care Directives" />

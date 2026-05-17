@@ -3,6 +3,7 @@ import { FeatureRow } from '../components/FeatureRow';
 import { Header } from '../components/Header';
 import { InfoLine } from '../components/InfoLine';
 import { SectionTitle } from '../components/SectionTitle';
+import { StateChecklistPanel } from '../components/StateChecklistPanel';
 import { StateGuidancePanel } from '../components/StateGuidancePanel';
 import { StatePicker } from '../components/StatePicker';
 import { styles } from '../components/styles';
@@ -34,6 +35,7 @@ export function SettingsScreen({
         />
       </View>
       <StateGuidancePanel stateCode={vault.directiveStateCode} />
+      <StateChecklistPanel vault={vault} />
       <View style={styles.panel}>
         <SectionTitle title="Attorney Office" />
         <Text style={styles.inputLabel}>Firm</Text>

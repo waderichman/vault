@@ -16,4 +16,9 @@ export const documentMeta: DocumentMeta = {
     purpose: 'States care wishes for end-of-life or no-recovery scenarios.',
     shortName: 'Wishes',
   },
+  'POLST / MOLST / POST': {
+    icon: 'clipboard-outline',
+    purpose: 'Portable medical orders for serious illness or frailty, usually completed with a clinician.',
+    shortName: 'Medical Orders',
+  },
 };

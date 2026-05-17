@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 export type Tab = 'vault' | 'emergency' | 'people' | 'settings';
 
-export type DirectiveDocumentType = 'Health Care Surrogate' | 'HIPAA Authorization' | 'Living Will';
+export type DirectiveDocumentType = 'Health Care Surrogate' | 'HIPAA Authorization' | 'Living Will' | 'POLST / MOLST / POST';
 
 export type VerificationStatus =
   | 'Attorney-uploaded'

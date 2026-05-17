@@ -19,6 +19,7 @@ export function PeopleScreen({
 }) {
   const [editingContact, setEditingContact] = useState<TrustedContact | null>(null);
   const [showContactForm, setShowContactForm] = useState(false);
+  const hasAttorneyInfo = Boolean(vault.attorneyFirm || vault.attorneyName || vault.attorneyPhone || vault.attorneyEmail);
 
   const saveContact = (contact: TrustedContact) => {
     setVault((current) => {
@@ -40,7 +41,7 @@ export function PeopleScreen({
 
   return (
     <ScrollView contentContainerStyle={styles.screen}>
-      <Header title="People" subtitle="Trusted contacts and attorney verification" />
+      <Header title="People" subtitle="Trusted contacts and professional contacts" />
       <View style={styles.sectionHeader}>
         <SectionTitle title="Trusted People" />
         <Pressable
@@ -53,22 +54,34 @@ export function PeopleScreen({
           <Ionicons name="person-add-outline" size={19} color="#0f766e" />
         </Pressable>
       </View>
-      {vault.contacts.map((contact) => (
-        <Pressable key={contact.id} style={styles.contactCard} onPress={() => setEditingContact(contact)}>
-          <View style={styles.flex}>
-            <Text style={styles.rowTitle}>{contact.name}</Text>
-            <Text style={styles.rowSub}>{contact.role}</Text>
-            <Text style={styles.tinyText}>{contact.phone}</Text>
-          </View>
-          {contact.canApproveAccess && <Ionicons name="shield-checkmark" size={24} color="#0f766e" />}
-        </Pressable>
-      ))}
+      {vault.contacts.length === 0 ? (
+        <View style={styles.panel}>
+          <Text style={styles.rowSub}>Add trusted people who should know how to access this vault in an emergency.</Text>
+        </View>
+      ) : (
+        vault.contacts.map((contact) => (
+          <Pressable key={contact.id} style={styles.contactCard} onPress={() => setEditingContact(contact)}>
+            <View style={styles.flex}>
+              <Text style={styles.rowTitle}>{contact.name}</Text>
+              <Text style={styles.rowSub}>{contact.role}</Text>
+              <Text style={styles.tinyText}>{contact.phone}</Text>
+            </View>
+            {contact.canApproveAccess && <Ionicons name="shield-checkmark" size={24} color="#0f766e" />}
+          </Pressable>
+        ))
+      )}
       <View style={styles.panel}>
-        <SectionTitle title="Attorney Verification" />
-        <InfoLine label="Firm" value={vault.attorneyFirm} />
-        <InfoLine label="Attorney" value={vault.attorneyName} />
-        <InfoLine label="Phone" value={vault.attorneyPhone} />
-        <InfoLine label="Email" value={vault.attorneyEmail} />
+        <SectionTitle title="Attorney Contact" />
+        {hasAttorneyInfo ? (
+          <>
+            <InfoLine label="Firm" value={vault.attorneyFirm || 'Not added'} />
+            <InfoLine label="Attorney" value={vault.attorneyName || 'Not added'} />
+            <InfoLine label="Phone" value={vault.attorneyPhone || 'Not added'} />
+            <InfoLine label="Email" value={vault.attorneyEmail || 'Not added'} />
+          </>
+        ) : (
+          <Text style={styles.rowSub}>No attorney contact has been added. Add one in Settings if a professional helped prepare or review these documents.</Text>
+        )}
       </View>
       <ContactForm
         visible={showContactForm || editingContact !== null}

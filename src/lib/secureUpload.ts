@@ -1,5 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { getStateRequirementProfile } from '../data/stateRequirements';
 import { firebaseAuth, firestore, isFirebaseConfigured } from './firebase';
 import { DirectiveDocument, VaultData } from '../types/vault';
 
@@ -28,6 +29,7 @@ export async function uploadEncryptedDocument({
 
   const vaultId = user.uid;
   const storagePath = `vaults/${vaultId}/documents/${document.id}.enc`;
+  const stateProfile = getStateRequirementProfile(vault.directiveStateCode);
 
   await uploadEncryptedFile(document.encryptedLocalUri, storagePath);
   onStorageUploaded?.();
@@ -41,6 +43,9 @@ export async function uploadEncryptedDocument({
       type: document.type,
       state: document.state,
       stateCode: vault.directiveStateCode ?? null,
+      jurisdictionLabel: stateProfile?.jurisdictionLabel ?? null,
+      legalStatus: stateProfile?.legalStatus ?? 'Not legal advice',
+      stateSourceUrl: stateProfile?.sourceUrl ?? null,
       signedDate: document.signedDate || null,
       uploaded_by: document.uploadedBy,
       storagePath,

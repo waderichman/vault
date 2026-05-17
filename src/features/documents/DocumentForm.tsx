@@ -29,7 +29,7 @@ export function DocumentForm({
   const [type, setType] = useState<DirectiveDocumentType>('Health Care Surrogate');
   const [signedDate, setSignedDate] = useState(new Date().toISOString().slice(0, 10));
   const [uploadedBy, setUploadedBy] = useState(defaultUploader);
-  const [attorneyUploaded, setAttorneyUploaded] = useState(true);
+  const [attorneyUploaded, setAttorneyUploaded] = useState(false);
   const [witnessed, setWitnessed] = useState(true);
   const [notarized, setNotarized] = useState(false);
   const [selectedFile, setSelectedFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
@@ -93,7 +93,7 @@ export function DocumentForm({
     <Modal animationType="slide" visible={visible} presentationStyle="pageSheet">
       <SafeAreaView style={styles.shell}>
         <ScrollView contentContainerStyle={styles.screen}>
-          <Header title="Add Document" subtitle="Create a verified directive record" />
+          <Header title="Add Document" subtitle="Encrypt and organize an existing directive" />
           <SegmentedOptions options={Object.keys(documentMeta) as DirectiveDocumentType[]} value={type} setValue={setType} />
           <View style={styles.panel}>
             <Pressable style={styles.uploadBox} onPress={pickPdf}>
@@ -109,7 +109,7 @@ export function DocumentForm({
             <TextInput style={styles.input} value={signedDate} onChangeText={setSignedDate} placeholder="YYYY-MM-DD" />
             <Text style={styles.inputLabel}>Uploaded by</Text>
             <TextInput style={styles.input} value={uploadedBy} onChangeText={setUploadedBy} />
-            <ToggleLine label="Attorney uploaded" value={attorneyUploaded} setValue={setAttorneyUploaded} />
+            <ToggleLine label="Attorney reviewed/uploaded" value={attorneyUploaded} setValue={setAttorneyUploaded} />
             <ToggleLine label="Witnessed" value={witnessed} setValue={setWitnessed} />
             <ToggleLine label="Notarized" value={notarized} setValue={setNotarized} />
           </View>

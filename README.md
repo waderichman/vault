@@ -2,7 +2,7 @@
 
 React Native TypeScript MVP for Expo Go.
 
-AdvanceVault is a secure, state-specific emergency vault for advance health care directives:
+AdvanceVault is a secure emergency vault for advance health care directives:
 
 - Health Care Surrogate / Health Care Proxy
 - HIPAA Authorization
@@ -61,9 +61,9 @@ npx expo start --clear
 
 Document detail will show **Upload Encrypted Blob** for locally encrypted PDFs. Uploaded files are written to Firebase Storage under `vaults/{uid}/documents/`, and metadata is written to Firestore under `users/{uid}/directiveDocuments/`.
 
-## State Guidance
+## State Context
 
-The app asks for a directive state during onboarding and stores both the display name and state code. Current state guidance uses source-linked, conservative categories and marks detailed legal requirements as needing legal review. Do not ship state-specific witness, notary, or form-validity claims until they are verified against official state materials or reviewed by counsel.
+The app asks for a directive state during onboarding and stores both the display name and state code. The state is used as jurisdiction metadata for organizing uploaded documents. AdvanceVault does not determine document legal validity or state execution requirements.
 
 ## Notes
 
