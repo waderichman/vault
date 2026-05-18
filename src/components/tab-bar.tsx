@@ -5,7 +5,6 @@ import { styles } from './styles';
 
 const tabConfig: Array<{ id: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }> = [
   { id: 'vault', label: 'Vault', icon: 'lock-closed-outline' },
-  { id: 'emergency', label: 'Emergency', icon: 'alert-circle-outline' },
   { id: 'people', label: 'People', icon: 'people-outline' },
   { id: 'settings', label: 'Settings', icon: 'settings-outline' },
 ];

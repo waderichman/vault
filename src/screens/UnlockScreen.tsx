@@ -13,7 +13,7 @@ export function UnlockScreen({ onUnlock }: { onUnlock: () => void }) {
           <Ionicons name="shield-checkmark" size={48} color="#0f766e" />
         </View>
         <Text style={styles.heroTitle}>AdvanceVault</Text>
-        <Text style={styles.heroCopy}>Secure emergency access for advance health care directives.</Text>
+        <Text style={styles.heroCopy}>Secure storage for advance health care directives.</Text>
         <Pressable style={styles.primaryButton} onPress={onUnlock}>
           <Ionicons name="scan-outline" size={20} color="#ffffff" />
           <Text style={styles.primaryButtonText}>Unlock Vault</Text>

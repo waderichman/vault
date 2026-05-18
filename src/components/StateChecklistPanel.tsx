@@ -22,15 +22,17 @@ export function StateChecklistPanel({ vault }: { vault: VaultData }) {
       <SectionTitle title="Document Checklist" />
       {checklist.map((item) => (
         <View key={item.id} style={styles.checklistRow}>
-          <View style={styles.rowIconSmall}>
-            <Ionicons name={iconForStatus(item.status)} size={18} color={colorForStatus(item.status)} />
-          </View>
-          <View style={styles.flex}>
-            <Text style={styles.rowTitle}>{item.label}</Text>
-            <Text style={styles.rowSub}>{item.note}</Text>
-            {item.matchedDocuments.length > 0 && (
-              <Text style={styles.tinyText}>{item.matchedDocuments.map((document) => document.fileName ?? document.type).join(', ')}</Text>
-            )}
+          <View style={styles.checklistMain}>
+            <View style={styles.rowIconSmall}>
+              <Ionicons name={iconForStatus(item.status)} size={18} color={colorForStatus(item.status)} />
+            </View>
+            <View style={styles.flex}>
+              <Text style={styles.rowTitle}>{item.label}</Text>
+              <Text style={styles.rowSub}>{item.note}</Text>
+              {item.matchedDocuments.length > 0 && (
+                <Text style={styles.tinyText}>{item.matchedDocuments.map((document) => document.fileName ?? document.type).join(', ')}</Text>
+              )}
+            </View>
           </View>
           <View style={[styles.checklistPill, item.status === 'missing' && styles.warningPill, item.status === 'review' && styles.reviewPill]}>
             <Text style={[styles.checklistPillText, item.status === 'missing' && styles.warningPillText, item.status === 'review' && styles.reviewPillText]}>

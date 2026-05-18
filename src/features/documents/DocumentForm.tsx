@@ -79,6 +79,9 @@ export function DocumentForm({
         encryptedLocalUri: encryptedFile.encryptedLocalUri,
         encryptedSize: encryptedFile.encryptedSize,
         encryptionKeyId: encryptedFile.encryptionKeyId,
+        wrappedEncryptionKey: encryptedFile.wrappedEncryptionKey,
+        wrappedEncryptionKeyIv: encryptedFile.wrappedEncryptionKeyIv,
+        keyWrapAlg: encryptedFile.keyWrapAlg,
         encryptionFingerprint: encryptedFile.encryptionFingerprint,
         uploadStatus: 'Encrypted locally',
       });

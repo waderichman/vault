@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Header } from '../components/Header';
-import { InfoLine } from '../components/InfoLine';
 import { SectionTitle } from '../components/SectionTitle';
 import { styles } from '../components/styles';
 import { ContactForm } from '../features/contacts/ContactForm';
@@ -19,7 +18,6 @@ export function PeopleScreen({
 }) {
   const [editingContact, setEditingContact] = useState<TrustedContact | null>(null);
   const [showContactForm, setShowContactForm] = useState(false);
-  const hasAttorneyInfo = Boolean(vault.attorneyFirm || vault.attorneyName || vault.attorneyPhone || vault.attorneyEmail);
 
   const saveContact = (contact: TrustedContact) => {
     setVault((current) => {
@@ -56,7 +54,7 @@ export function PeopleScreen({
       </View>
       {vault.contacts.length === 0 ? (
         <View style={styles.panel}>
-          <Text style={styles.rowSub}>Add trusted people who should know how to access this vault in an emergency.</Text>
+          <Text style={styles.rowSub}>Add trusted people connected to these documents, such as family, attorneys, or clinicians.</Text>
         </View>
       ) : (
         vault.contacts.map((contact) => (
@@ -66,23 +64,10 @@ export function PeopleScreen({
               <Text style={styles.rowSub}>{contact.role}</Text>
               <Text style={styles.tinyText}>{contact.phone}</Text>
             </View>
-            {contact.canApproveAccess && <Ionicons name="shield-checkmark" size={24} color="#0f766e" />}
+            <Ionicons name="person-circle-outline" size={24} color="#0f766e" />
           </Pressable>
         ))
       )}
-      <View style={styles.panel}>
-        <SectionTitle title="Attorney Contact" />
-        {hasAttorneyInfo ? (
-          <>
-            <InfoLine label="Firm" value={vault.attorneyFirm || 'Not added'} />
-            <InfoLine label="Attorney" value={vault.attorneyName || 'Not added'} />
-            <InfoLine label="Phone" value={vault.attorneyPhone || 'Not added'} />
-            <InfoLine label="Email" value={vault.attorneyEmail || 'Not added'} />
-          </>
-        ) : (
-          <Text style={styles.rowSub}>No attorney contact has been added. Add one in Settings if a professional helped prepare or review these documents.</Text>
-        )}
-      </View>
       <ContactForm
         visible={showContactForm || editingContact !== null}
         contact={editingContact}

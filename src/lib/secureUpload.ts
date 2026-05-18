@@ -51,6 +51,9 @@ export async function uploadEncryptedDocument({
       storagePath,
       encryptedSize: document.encryptedSize ?? null,
       encryptionKeyRef: document.encryptionKeyId ?? 'local-demo-key',
+      wrappedEncryptionKey: document.wrappedEncryptionKey ?? null,
+      wrappedEncryptionKeyIv: document.wrappedEncryptionKeyIv ?? null,
+      keyWrapAlg: document.keyWrapAlg ?? null,
       fingerprint: document.encryptionFingerprint ?? 'missing-fingerprint',
       isActive: document.isActive,
       statuses: document.statuses,
@@ -109,6 +112,50 @@ async function uploadEncryptedFile(fileUri: string, storagePath: string) {
   }
 
   throw new Error(`Firebase Storage upload failed. Tried ${bucketsToTry.join(', ')}. ${errors.join(' | ')}`);
+}
+
+export async function downloadEncryptedDocumentPayload(storagePath: string) {
+  const storageBucket = process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  const token = await firebaseAuth.currentUser?.getIdToken();
+
+  if (!storageBucket) {
+    throw new Error('Missing EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET in .env.');
+  }
+
+  if (!token) {
+    throw new Error('Sign in before opening encrypted documents.');
+  }
+
+  const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/${encodeURIComponent(storagePath)}?alt=media`;
+  const response = await fetch(downloadUrl, {
+    headers: {
+      Authorization: `Firebase ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Firebase Storage download failed (${response.status}).`);
+  }
+
+  return response.text();
+}
+
+export async function deleteEncryptedDocument(storagePath: string) {
+  const storageBucket = process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  const token = await firebaseAuth.currentUser?.getIdToken();
+
+  if (!storageBucket || !token) {
+    return;
+  }
+
+  const deleteUrl = `https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/${encodeURIComponent(storagePath)}`;
+
+  await fetch(deleteUrl, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Firebase ${token}`,
+    },
+  });
 }
 
 function withTimeout<T>(promise: Promise<T>, milliseconds: number, message: string) {

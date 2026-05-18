@@ -2,31 +2,42 @@ import { StatusBar } from 'expo-status-bar';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
 import { Alert, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { TabBar } from './src/components/tab-bar';
 import { styles } from './src/components/styles';
 import { defaultVault } from './src/data/defaultVault';
 import { authenticate } from './src/lib/auth';
+import { clearCloudDocuments, loadCloudDocuments, mergeCloudDocuments } from './src/lib/cloudDocuments';
+import { hasLocalVaultKey, restoreVaultKeyFromSavedPassphrase } from './src/lib/documentKeys';
 import { firebaseAuth } from './src/lib/firebase';
 import { makeId } from './src/lib/ids';
 import { upsertUserProfile } from './src/lib/userProfile';
 import { clearVault, loadVault, saveVault } from './src/lib/vaultStorage';
 import { AuthScreen } from './src/screens/AuthScreen';
-import { EmergencyScreen } from './src/screens/EmergencyScreen';
 import { LoadingScreen } from './src/screens/LoadingScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { PeopleScreen } from './src/screens/PeopleScreen';
+import { RecoveryScreen } from './src/screens/RecoveryScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { UnlockScreen } from './src/screens/UnlockScreen';
 import { VaultScreen } from './src/screens/VaultScreen';
 import { Tab, VaultData } from './src/types/vault';
 
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AdvanceVaultApp />
+    </SafeAreaProvider>
+  );
+}
+
+function AdvanceVaultApp() {
   const [unlocked, setUnlocked] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('vault');
   const [vault, setVault] = useState<VaultData>(defaultVault);
   const [loaded, setLoaded] = useState(false);
   const [authLoaded, setAuthLoaded] = useState(false);
+  const [vaultKeyReady, setVaultKeyReady] = useState(true);
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -34,6 +45,7 @@ export default function App() {
       setUser(nextUser);
       setUnlocked(false);
       setActiveTab('vault');
+      setVaultKeyReady(true);
       setAuthLoaded(true);
       if (nextUser) {
         upsertUserProfile(nextUser).catch((error) => {
@@ -52,6 +64,28 @@ export default function App() {
 
     setLoaded(false);
     loadVault(user.uid)
+      .then(async (localVault) => {
+        const mergedVault = mergeCloudDocuments(localVault, await loadCloudDocuments(user.uid));
+        const hasCloudEncryptedDocuments = mergedVault.documents.some(
+          (document) => document.remoteStoragePath || document.wrappedEncryptionKey || document.uploadStatus === 'Uploaded encrypted blob',
+        );
+        let keyReady = true;
+
+        if (hasCloudEncryptedDocuments) {
+          keyReady = await hasLocalVaultKey();
+
+          if (!keyReady) {
+            try {
+              keyReady = await restoreVaultKeyFromSavedPassphrase();
+            } catch (error) {
+              console.warn('Could not restore vault key from saved phrase', error);
+            }
+          }
+        }
+
+        setVaultKeyReady(keyReady);
+        return mergedVault;
+      })
       .then(setVault)
       .finally(() => setLoaded(true));
   }, [user]);
@@ -74,14 +108,17 @@ export default function App() {
   };
 
   const resetVault = () => {
-    Alert.alert('Reset demo vault?', 'This clears local demo data on this device.', [
+    Alert.alert('Reset vault?', 'This clears this account’s document records from this device and Firebase.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Reset',
         style: 'destructive',
-        onPress: () => {
+        onPress: async () => {
           if (user) {
-            clearVault(user.uid);
+            await clearCloudDocuments(user.uid).catch((error) => {
+              console.warn('Could not clear cloud documents', error);
+            });
+            await clearVault(user.uid);
           }
           setVault(defaultVault);
           setUnlocked(false);
@@ -110,6 +147,10 @@ export default function App() {
     return <UnlockScreen onUnlock={() => authenticate(setUnlocked)} />;
   }
 
+  if (!vaultKeyReady) {
+    return <RecoveryScreen onRestored={() => setVaultKeyReady(true)} />;
+  }
+
   if (!vault.onboarded) {
     return <OnboardingScreen onComplete={updateVault} />;
   }
@@ -118,8 +159,7 @@ export default function App() {
     <SafeAreaView style={styles.shell}>
       <StatusBar style="dark" />
       <View style={styles.content}>
-        {activeTab === 'vault' && <VaultScreen vault={vault} setVault={setVault} onOpenEmergency={() => setActiveTab('emergency')} addAudit={addAudit} />}
-        {activeTab === 'emergency' && <EmergencyScreen vault={vault} setVault={setVault} addAudit={addAudit} />}
+        {activeTab === 'vault' && <VaultScreen vault={vault} setVault={setVault} addAudit={addAudit} defaultUploader={user.email ?? user.displayName ?? ''} />}
         {activeTab === 'people' && <PeopleScreen vault={vault} setVault={setVault} addAudit={addAudit} />}
         {activeTab === 'settings' && (
           <SettingsScreen vault={vault} updateVault={updateVault} resetVault={resetVault} userEmail={user.email} onSignOut={signOutUser} />

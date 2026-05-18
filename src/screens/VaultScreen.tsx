@@ -17,13 +17,13 @@ import { DirectiveDocument, VaultData } from '../types/vault';
 export function VaultScreen({
   vault,
   setVault,
-  onOpenEmergency,
   addAudit,
+  defaultUploader,
 }: {
   vault: VaultData;
   setVault: React.Dispatch<React.SetStateAction<VaultData>>;
-  onOpenEmergency: () => void;
   addAudit: (message: string) => void;
+  defaultUploader: string;
 }) {
   const [selectedDocument, setSelectedDocument] = useState<DirectiveDocument | null>(null);
   const [showDocumentForm, setShowDocumentForm] = useState(false);
@@ -36,6 +36,14 @@ export function VaultScreen({
       documents: current.documents.map((item) => (item.id === documentId ? { ...item, uploadStatus } : item)),
     }));
     setSelectedDocument((current) => (current?.id === documentId ? { ...current, uploadStatus } : current));
+  };
+
+  const updateDocumentRemotePath = (documentId: string, remoteStoragePath: string) => {
+    setVault((current) => ({
+      ...current,
+      documents: current.documents.map((item) => (item.id === documentId ? { ...item, remoteStoragePath } : item)),
+    }));
+    setSelectedDocument((current) => (current?.id === documentId ? { ...current, remoteStoragePath } : current));
   };
 
   const saveDocument = (document: DirectiveDocument) => {
@@ -67,7 +75,7 @@ export function VaultScreen({
     let storageUploaded = false;
 
     try {
-      await uploadEncryptedDocument({
+      const storagePath = await uploadEncryptedDocument({
         vault,
         document,
         onStorageUploaded: () => {
@@ -75,6 +83,7 @@ export function VaultScreen({
           updateDocumentStatus(document.id, 'Encrypted blob uploaded; saving metadata');
         },
       });
+      updateDocumentRemotePath(document.id, storagePath);
       updateDocumentStatus(document.id, 'Uploaded encrypted blob');
       addAudit(`${document.type} encrypted blob uploaded`);
       Alert.alert('Uploaded', 'Encrypted document blob and metadata were uploaded to Firebase.');
@@ -128,11 +137,6 @@ export function VaultScreen({
         </Pressable>
       ))}
 
-      <Pressable style={styles.secondaryButton} onPress={onOpenEmergency}>
-        <Ionicons name="alert-circle-outline" size={20} color="#0f766e" />
-        <Text style={styles.secondaryButtonText}>Review emergency access</Text>
-      </Pressable>
-
       {selectedDocument && (
         <DocumentDetail
           document={selectedDocument}
@@ -141,7 +145,7 @@ export function VaultScreen({
           onUpload={() => uploadDocument(selectedDocument)}
         />
       )}
-      <DocumentForm visible={showDocumentForm} state={vault.directiveState} defaultUploader={vault.attorneyFirm} onCancel={() => setShowDocumentForm(false)} onSave={saveDocument} />
+      <DocumentForm visible={showDocumentForm} state={vault.directiveState} defaultUploader={defaultUploader} onCancel={() => setShowDocumentForm(false)} onSave={saveDocument} />
     </ScrollView>
   );
 }

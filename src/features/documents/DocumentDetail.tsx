@@ -1,11 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import { InfoLine } from '../../components/InfoLine';
 import { styles } from '../../components/styles';
 import { documentMeta } from '../../data/documentMeta';
 import { formatBytes } from '../../lib/formatting';
+import { prepareDecryptedDocument } from '../../lib/documentViewer';
 import { DirectiveDocument } from '../../types/vault';
+import { PdfPreviewModal } from './PdfPreviewModal';
 
 export function DocumentDetail({
   document,
@@ -19,6 +21,9 @@ export function DocumentDetail({
   onUpload: () => Promise<void>;
 }) {
   const [isUploading, setIsUploading] = useState(false);
+  const [isOpening, setIsOpening] = useState(false);
+  const [previewUri, setPreviewUri] = useState<string | null>(null);
+  const canOpenDocument = Boolean(document.encryptedLocalUri || document.remoteStoragePath);
 
   const upload = async () => {
     setIsUploading(true);
@@ -26,6 +31,18 @@ export function DocumentDetail({
       await onUpload();
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const openDocument = async () => {
+    setIsOpening(true);
+    try {
+      const uri = await prepareDecryptedDocument(document);
+      setPreviewUri(uri);
+    } catch (error) {
+      Alert.alert('Could not open document', error instanceof Error ? error.message : 'The document could not be decrypted on this device.');
+    } finally {
+      setIsOpening(false);
     }
   };
 
@@ -62,12 +79,19 @@ export function DocumentDetail({
         <Ionicons name={document.isActive ? 'archive-outline' : 'checkmark-circle-outline'} size={20} color="#0f766e" />
         <Text style={styles.secondaryButtonText}>{document.isActive ? 'Mark Superseded' : 'Make Active'}</Text>
       </Pressable>
+      {canOpenDocument && (
+        <Pressable style={styles.secondaryButton} disabled={isOpening} onPress={openDocument}>
+          <Ionicons name={isOpening ? 'hourglass-outline' : 'eye-outline'} size={20} color="#0f766e" />
+          <Text style={styles.secondaryButtonText}>{isOpening ? 'Opening Document...' : 'View Decrypted PDF'}</Text>
+        </Pressable>
+      )}
       {document.encryptedLocalUri && document.uploadStatus !== 'Uploaded encrypted blob' && (
         <Pressable style={styles.primaryButton} disabled={isUploading} onPress={upload}>
           <Ionicons name={isUploading ? 'cloud-upload-outline' : 'cloud-done-outline'} size={20} color="#ffffff" />
           <Text style={styles.primaryButtonText}>{isUploading ? 'Uploading Encrypted Blob...' : 'Upload Encrypted Blob'}</Text>
         </Pressable>
       )}
+      <PdfPreviewModal visible={Boolean(previewUri)} title={document.fileName ?? document.type} uri={previewUri} onClose={() => setPreviewUri(null)} />
     </View>
   );
 }

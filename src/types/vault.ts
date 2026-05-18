@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 
-export type Tab = 'vault' | 'emergency' | 'people' | 'settings';
+export type Tab = 'vault' | 'people' | 'settings';
 
 export type DirectiveDocumentType = 'Health Care Surrogate' | 'HIPAA Authorization' | 'Living Will' | 'POLST / MOLST / POST';
 
@@ -28,7 +28,11 @@ export type DirectiveDocument = {
   encryptedLocalUri?: string;
   encryptedSize?: number;
   encryptionKeyId?: string;
+  wrappedEncryptionKey?: string;
+  wrappedEncryptionKeyIv?: string;
+  keyWrapAlg?: string;
   encryptionFingerprint?: string;
+  remoteStoragePath?: string;
   uploadStatus?:
     | 'No file attached'
     | 'Local PDF selected'
@@ -44,15 +48,6 @@ export type TrustedContact = {
   name: string;
   role: string;
   phone: string;
-  canApproveAccess: boolean;
-};
-
-export type AccessRequest = {
-  id: string;
-  requesterName: string;
-  requesterRole: string;
-  status: 'Pending' | 'Approved' | 'Denied';
-  requestedAt: string;
 };
 
 export type AuditEvent = {
@@ -66,15 +61,8 @@ export type VaultData = {
   memberName: string;
   directiveState: string;
   directiveStateCode?: string;
-  attorneyName: string;
-  attorneyFirm: string;
-  attorneyPhone: string;
-  attorneyEmail: string;
-  requirePin: boolean;
-  requireTwoApprovals: boolean;
   documents: DirectiveDocument[];
   contacts: TrustedContact[];
-  accessRequests: AccessRequest[];
   auditLog: AuditEvent[];
 };
 
